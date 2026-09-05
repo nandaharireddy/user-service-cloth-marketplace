@@ -1,0 +1,88 @@
+server:
+  port: ${PORT:8081}
+
+spring:
+  application:
+    name: user-service
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/cloth_marketplace?currentSchema=user_service}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:BK@143}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        default_schema: user_service
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: false
+    show-sql: false
+    open-in-view: false
+
+  flyway:
+    enabled: true
+    schemas: user_service
+    default-schema: user_service
+    create-schemas: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${random.value}
+
+jwt:
+  # HS256 requires at least 256 bits (32 bytes) of secret key. Externalized via JWT_SECRET
+  secret: ${JWT_SECRET:clothmarketplace-super-secret-jwt-key-must-be-at-least-256-bits-long-for-hs256-algorithm}
+  # 15 minutes in milliseconds = 900,000 ms
+  access-token-expiration-ms: ${JWT_ACCESS_TOKEN_EXPIRATION_MS:900000}
+  # 7 days in milliseconds = 604,800,000 ms
+  refresh-token-expiration-ms: ${JWT_REFRESH_TOKEN_EXPIRATION_MS:604800000}
+
+security:
+  rate-limit:
+    # Max allowed requests per minute per IP on sensitive auth endpoints (/auth/login, /auth/register)
+    max-requests-per-minute: ${AUTH_RATE_LIMIT_PER_MINUTE:10}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operationsSorter: method
+    tagsSorter: alpha
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{correlationId:-NONE}] %-5level %logger{36} - %msg%n"
+  level:
+    root: INFO
+    com.clothmarket.user: INFO
+    org.springframework.security: WARN
+    org.flywaydb: INFO
